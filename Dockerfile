@@ -1,27 +1,23 @@
-# Use a smaller base image for building
-FROM adoptopenjdk:11-jre-hotspot AS builder
+# Use a alpine base image
+FROM alpine:3.20
+
+ADD https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/release-2024-06-20/validator-configuration-xrechnung_3.0.2_2024-06-20.zip /tmp/validator-configuration.zip
+ADD https://github.com/itplr-kosit/validator/releases/download/v1.5.0/validator-1.5.0-distribution.zip /tmp/validator.zip
+
+# Install OpenJDK 11 and unzip
+RUN printf "https://ftp.halifax.rwth-aachen.de/alpine/edge/main\nhttps://ftp.halifax.rwth-aachen.de/alpine/edge/community" > /etc/apk/repositories 
+RUN apk --no-cache add unzip openjdk11
+
+# unzip files
+RUN unzip /tmp/\*.zip -d /app
+
+# Cleanup
+RUN rm -rf /tmp/*.zip
+
+USER 1000:1000
 
 # Set the working directory
 WORKDIR /app
-
-# Copy only necessary application files
-COPY validationtool-1.5.0-standalone.jar scenarios.xml EN16931-CII-validation.xslt EN16931-UBL-validation.xslt /app/
-COPY resources /app/resources
-
-# Use a minimal base image for the final image
-FROM alpine:3.14
-
-# Install OpenJDK 11 JRE
-RUN apk --no-cache add openjdk11-jre
-
-# Set the working directory
-WORKDIR /app
-
-# Copy files from the builder stage
-COPY --from=builder /app /app
-
-# Remove unnecessary files and dependencies
-# RUN rm -rf /app/resources
 
 # Expose port 8081
 EXPOSE 8081
